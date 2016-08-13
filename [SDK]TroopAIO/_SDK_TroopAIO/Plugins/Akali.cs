@@ -43,7 +43,6 @@ namespace _SDK_TroopAIO.Plugins
                 Key.Add(new MenuKeyBind("Harass", "Harass", System.Windows.Forms.Keys.C, KeyBindType.Press));
                 Key.Add(new MenuKeyBind("LaneClear", "LaneClear", System.Windows.Forms.Keys.V, KeyBindType.Press));
                 Key.Add(new MenuKeyBind("LastHit", "LastHit", System.Windows.Forms.Keys.X, KeyBindType.Press));
-                Key.Add(new MenuKeyBind("Flee, "Flee", System.Windows.Forms.Keys.Y, KeyBindType.Press));
             }
 
             var Combo = Menu.Add(new Menu("Combo", "Combo"));
