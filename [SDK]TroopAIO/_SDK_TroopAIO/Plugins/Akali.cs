@@ -53,6 +53,8 @@ namespace _SDK_TroopAIO.Plugins
                 Combo.Add(new MenuBool("UseECombo", "Use E", true));
 
                 Combo.Add(new MenuBool("UseRCombo", "Use R", true));
+                
+                ComboMenu.Add(new MenuKeyBind("RTower", "Use R Under Enemy Turret", System.Windows.Forms.Keys.T, KeyBindType.Toggle)).Active = true;
 
             }
 
@@ -74,6 +76,13 @@ namespace _SDK_TroopAIO.Plugins
             var LaneClear = Menu.Add(new Menu("LaneClear", "LaneClear"));
             {
                 LaneClear.Add(new MenuBool("useelc", "Use E to laneclear", true));
+            }
+            
+            var FleeMenu = Menu.Add(new Menu("Flee", "Flee"));
+            {
+                FleeMenu.Add(new MenuBool("W", "W", true));
+                FleeMenu.Add(new MenuSliderButton("R", "Use R | When R Buff Count >=", 2, 1, 3, true));
+                FleeMenu.Add(new MenuKeyBind("Key", "Flee Key", System.Windows.Forms.Keys.Y, KeyBindType.Press));
             }
 
             var Draw = Menu.Add(new Menu("Draw", "Draw"));
@@ -104,6 +113,11 @@ namespace _SDK_TroopAIO.Plugins
                 {
                     Combo();
                 }
+                
+                            if (Menu["Flee"]["Key"].GetValue<MenuKeyBind>().Active)
+            {
+                Flee();
+            }
 
                 if (Menu["Key"]["Harass"].GetValue<MenuKeyBind>().Active)
                 {
@@ -148,6 +162,11 @@ namespace _SDK_TroopAIO.Plugins
                 {
                     Q.Cast(en);
                 }
+                
+                if (!Menu["Combo"]["RTower"].GetValue<MenuKeyBind>().Active && target.IsUnderEnemyTurret())
+                    {
+                        return;
+                    }
 
                 if (ComboR && R.IsReady() && en.IsValidTarget(R.Range))
                 {
@@ -155,6 +174,46 @@ namespace _SDK_TroopAIO.Plugins
                     {
                         R.Cast(en);
                     }
+                }
+            }
+        }
+        
+                private static void Flee()
+        {
+            Variables.Orbwalker.Move(Game.CursorPos);
+
+            if (Menu["Flee"]["W"] && W.IsReady())
+            {
+                var target = GetTarget(W.Range);
+
+                if (CheckTarget(target))
+                {
+                    if (target.IsValidTarget(W.Range))
+                    {
+                        if (Me.ServerPosition.Distance(Game.CursorPos) < 200)
+                        {
+                            W.Cast(Me.ServerPosition);
+                            return;
+                        }
+                        else if (Me.ServerPosition.Distance(Game.CursorPos) >= 200 &&
+                            Me.ServerPosition.Distance(Game.CursorPos) <= 400)
+                        {
+                            W.Cast(Game.CursorPos);
+                            return;
+                        }
+                    }
+                }
+            }
+
+            if (Menu["Flee"]["R"].GetValue<MenuSliderButton>().BValue && R.IsReady() && RCount >= Menu["Flee"]["R"].GetValue<MenuSliderButton>().SValue)
+            {
+                var minion = ObjectManager.Get<Obj_AI_Minion>().Where(x => x.IsValidTarget(R.Range) && !x.IsAlly && R.CanCast(x)).
+                    OrderBy(x => x.Position.Distance(Game.CursorPos)).FirstOrDefault();
+
+                if (minion != null)
+                {
+                    R.CastOnUnit(minion);
+                    return;
                 }
             }
         }
