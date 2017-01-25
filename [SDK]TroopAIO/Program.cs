@@ -31,7 +31,7 @@
             Menu.Add(new MenuSeparator("Updated for every Patch!", "Updated for every Patch!"));
             var Cred = Menu.Add(new Menu("Credits", "Credits"));
             {
-                Cred.Add(new MenuSeparator("Everything has been done by trooperhdx with some help of StopMotionCuber!", "Everything has been done by trooperhdx with some help of StopMotionCuber!"));
+                Cred.Add(new MenuSeparator("GIVE STOPMOTIONCUBER CONTRIBUTOR!", "GIVE STOPMOTIONCUBER CONTRIBUTOR1"));
             }
             var Sup = Menu.Add(new Menu("Supported Champions", "Supported Champions"));
             {
