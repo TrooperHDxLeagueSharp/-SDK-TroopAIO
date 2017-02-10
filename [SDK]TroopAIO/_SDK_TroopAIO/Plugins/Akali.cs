@@ -1,36 +1,20 @@
-﻿using LeagueSharp;
-using LeagueSharp.SDK;
-using LeagueSharp.SDK.Enumerations;
-using LeagueSharp.SDK.UI;
-using LeagueSharp.SDK.Utils;
-using System;
-using System.Drawing;
-using System.Linq;
-using System.Windows.Forms;
-
-using Menu = LeagueSharp.SDK.UI.Menu;
-
-
-namespace _SDK_TroopAIO.Plugins
-
-
-
-
-
-
+﻿namespace _SDK_TroopAIO.Plugins
 {
+    using LeagueSharp;
+    using LeagueSharp.SDK;
+    using LeagueSharp.SDK.Enumerations;
+    using LeagueSharp.SDK.UI;
+    using LeagueSharp.SDK.Utils;
+    using System;
+    using System.Linq;
+
     internal class Akali : Program
     {
-
-
-        public static Spell Q, E, R;
-        internal string comb = "   ";
+        private static Spell Q, E, R;
         private static Items.Item hextech;
         private static Items.Item cutlass;
 
-
         public Akali()
-
         //Summs
         {
             Q = new Spell(SpellSlot.Q, 600f);
@@ -47,13 +31,9 @@ namespace _SDK_TroopAIO.Plugins
 
             var Combo = Menu.Add(new Menu("Combo", "Combo"));
             {
-
                 Combo.Add(new MenuBool("UseQCombo", "Use Q", true));
-
                 Combo.Add(new MenuBool("UseECombo", "Use E", true));
-
                 Combo.Add(new MenuBool("UseRCombo", "Use R", true));
-
             }
 
             var Harass = Menu.Add(new Menu("Harass", "Harass"));
@@ -82,6 +62,7 @@ namespace _SDK_TroopAIO.Plugins
                 Draw.Add(new MenuBool("DrawE", "Draw E Range"));
                 Draw.Add(new MenuBool("DrawR", "Draw R Range"));
             }
+
             hextech = new Items.Item(3146, 700);
             cutlass = new Items.Item(3144, 450);
 
@@ -89,16 +70,16 @@ namespace _SDK_TroopAIO.Plugins
             Drawing.OnDraw += Drawing_OnDraw;
             Events.OnGapCloser += OnGapCloser;
             Variables.Orbwalker.OnAction += Orbwalker_OnAction;
-
         }
-
 
         private void Game_OnUpdate(EventArgs args)
         {
             try
             {
                 if (Me.IsDead)
+                {
                     return;
+                }
 
                 if (Menu["Key"]["Combo"].GetValue<MenuKeyBind>().Active)
                 {
@@ -128,9 +109,9 @@ namespace _SDK_TroopAIO.Plugins
 
         private void Combo()
         {
+            try
             {
                 var en = Variables.TargetSelector.GetTarget(700, DamageType.Magical);
-
                 var ComboQ = Menu["Combo"]["UseQCombo"].GetValue<MenuBool>();
                 var ComboR = Menu["Combo"]["UseRCombo"].GetValue<MenuBool>();
 
@@ -138,11 +119,11 @@ namespace _SDK_TroopAIO.Plugins
                 {
                     hextech.Cast(en);
                 }
+
                 if (en != null && Me.Distance(en) <= cutlass.Range)
                 {
                     cutlass.Cast(en);
                 }
-
 
                 if (ComboQ && Q.IsReady() && en.IsValidTarget(Q.Range))
                 {
@@ -157,30 +138,51 @@ namespace _SDK_TroopAIO.Plugins
                     }
                 }
             }
+            catch (Exception ex)
+            {
+                Console.WriteLine(ex);
+            }
         }
 
         private void Harass()
         {
-            var HT = Variables.TargetSelector.GetTarget(700, DamageType.Magical);
-            var HarassQ = Menu["Harass"]["HarassUseQ"].GetValue<MenuBool>();
-
-            if (HarassQ && Q.IsReady() && HT.IsValidTarget(Q.Range))
+            try
             {
-                Q.Cast(HT);
-            }
+                var HT = Variables.TargetSelector.GetTarget(700, DamageType.Magical);
+                var HarassQ = Menu["Harass"]["HarassUseQ"].GetValue<MenuBool>();
 
+                if (HarassQ && Q.IsReady() && HT.IsValidTarget(Q.Range))
+                {
+                    Q.Cast(HT);
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine(ex);
+            }
         }
 
         private void LastHit()
         {
-            if (GameObjects.EnemyMinions.Count() != 0 && (Menu["LastHit"]["qlh"].GetValue<MenuBool>() && Q.IsReady()))
+            try
             {
-                Obj_AI_Minion minion =
-                    GameObjects.EnemyMinions.FirstOrDefault(m => m.Distance(Me) <= Q.Range && m.Health <= Q.GetDamage(m));
-                Q.Cast(minion);
+                if (Menu["LastHit"]["qlh"].GetValue<MenuBool>() && Q.IsReady())
+                {
+                    var minion =
+                        GameObjects.EnemyMinions.FirstOrDefault(
+                                x => x.DistanceToPlayer() <= Q.Range && !x.InAutoAttackRange() && x.Health < Q.GetDamage(x));
+
+                    if (minion != null)
+                    {
+                        Q.Cast(minion);
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine(ex);
             }
         }
-
 
         private void Drawing_OnDraw(EventArgs args)
         {
@@ -204,17 +206,16 @@ namespace _SDK_TroopAIO.Plugins
             }
         }
 
-
-
         private void Orbwalker_OnAction(object sender, OrbwalkingActionArgs args)
         {
             try
             {
-                if (args.Type == OrbwalkingType.OnAttack && Menu["Key"]["Combo"].GetValue<MenuKeyBind>().Active && (args.Target is Obj_AI_Hero))
+                if (args.Type == OrbwalkingType.OnAttack && Menu["Key"]["Combo"].GetValue<MenuKeyBind>().Active &&
+                    args.Target is Obj_AI_Hero)
                 {
                     if (Menu["Combo"]["UseECombo"].GetValue<MenuBool>() && E.IsReady())
                     {
-                        E.CastOnUnit(args.Target as Obj_AI_Hero);
+                        E.CastOnUnit((Obj_AI_Hero) args.Target);
                     }
                 }
             }
@@ -228,12 +229,13 @@ namespace _SDK_TroopAIO.Plugins
         {
             try
             {
-                if (Menu["Key"]["LaneClear"].GetValue<MenuKeyBind>().Active)
-                    if (GameObjects.EnemyMinions.Where(mins => mins.Position.DistanceToPlayer() < E.Range).Count() >= 2 && (Menu["LaneClear"]["useelc"].GetValue<MenuBool>() && E.IsReady()))
+                if (Menu["LaneClear"]["useelc"].GetValue<MenuBool>() && E.IsReady())
+                {
+                    if (GameObjects.EnemyMinions.Count(mins => mins.Position.DistanceToPlayer() < E.Range) >= 2)
                     {
                         E.Cast();
                     }
-
+                }
             }
             catch (Exception ex)
             {
@@ -245,10 +247,14 @@ namespace _SDK_TroopAIO.Plugins
         {
             try
             {
-                var RGc = Variables.TargetSelector.GetTarget(700, DamageType.Magical);
-                if (!RGc.IsUnderEnemyTurret() && (Menu["Misc"]["RGapClose"].GetValue<MenuBool>() && R.IsReady()))
+                if (Menu["Misc"]["RGapClose"].GetValue<MenuBool>() && R.IsReady())
                 {
-                    R.Cast(RGc);
+                    var RGc = Variables.TargetSelector.GetTarget(700, DamageType.Magical);
+
+                    if (!RGc.IsUnderEnemyTurret())
+                    {
+                        R.Cast(RGc);
+                    }
                 }
             }
             catch (Exception ex)
